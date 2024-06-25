@@ -1,0 +1,15 @@
+[package]
+name = "local"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+
+[[bin]]
+name = "local"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { version = "1", features = ["backtrace"] }
+log = "0.4.14"
+regex = "1.10.3"
+
