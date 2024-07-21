@@ -1,4 +1,5 @@
 use crate as pallet_kitties;
+use frame_support::traits::Hooks;
 use frame_support::{
     derive_impl,
     traits::{ConstU16, ConstU64},
@@ -8,7 +9,6 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     BuildStorage,
 };
-
 type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
@@ -58,4 +58,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .build_storage()
         .unwrap()
         .into()
+}
+
+pub fn run_to_block(n: u64) {
+    while System::block_number() < n {
+        Kitties::on_finalize(System::block_number());
+        System::on_finalize(System::block_number());
+        System::set_block_number(System::block_number() + 1);
+        System::on_initialize(System::block_number());
+        Kitties::on_initialize(System::block_number());
+    }
 }

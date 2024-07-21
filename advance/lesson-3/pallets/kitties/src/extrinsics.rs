@@ -9,8 +9,6 @@ mod dispatches {
     /// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
@@ -21,8 +19,6 @@ mod dispatches {
             Ok(())
         }
 
-        #[pallet::call_index(1)]
-        #[pallet::weight(T::WeightInfo::cause_error())]
         pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
 
