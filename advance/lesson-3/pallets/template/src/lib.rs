@@ -199,4 +199,15 @@ pub mod pallet {
             }
         }
     }
+
+    #[pallet::hooks]
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+        fn on_initialize(n: BlockNumberFor<T>) -> Weight {
+            log::info!("Template on_initialize at block {:?}", n);
+            Weight::default()
+        }
+        fn on_finalize(n: BlockNumberFor<T>) {
+            log::info!("Template on_finalize at block {:?}", n);
+        }
+    }
 }

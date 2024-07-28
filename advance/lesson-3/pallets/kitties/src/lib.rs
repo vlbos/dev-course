@@ -18,16 +18,21 @@ mod errors;
 mod events;
 mod extrinsics;
 mod hooks;
+mod impls;
 
+/// Import all sections from different files.
 #[import_section(extrinsics::dispatches)]
 #[import_section(errors::errors)]
 #[import_section(events::events)]
 #[import_section(config::config)]
 #[import_section(hooks::hooks)]
+#[import_section(impls::impls)]
+/// Set the pallet at dev mode for quick PoC.
 #[frame_support::pallet(dev_mode)]
 pub mod pallet {
     use super::*;
     use frame_support::pallet_prelude::*;
+    use frame_support::traits::Randomness;
     use frame_system::pallet_prelude::*;
 
     #[pallet::pallet]

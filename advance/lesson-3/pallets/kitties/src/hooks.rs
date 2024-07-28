@@ -1,17 +1,19 @@
 use frame_support::pallet_macros::pallet_section;
 
+/// Define all hooks used in the pallet.
 #[pallet_section]
 mod hooks {
-    // use super::*;
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_initialize(n: BlockNumberFor<T>) -> Weight {
-            log::info!("on_initialize at block {}", n);
-            0.into()
+            log::info!("Kitties on_initialize at block {:?}", n);
+            Weight::default()
         }
-        fn on_finalize(n: BlockNumberFor<T>) {}
+        fn on_finalize(n: BlockNumberFor<T>) {
+            log::info!("Kitties on_finalize at block {:?}", n);
+        }
         fn on_runtime_upgrade() -> Weight {
-            0.into()
+            Weight::default()
         }
         fn integrity_test() {}
     }

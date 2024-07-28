@@ -17,6 +17,7 @@ frame_support::construct_runtime!(
     {
         System: frame_system,
         Kitties: pallet_kitties,
+        Random: pallet_insecure_randomness_collective_flip,
     }
 );
 
@@ -50,10 +51,17 @@ impl frame_system::Config for Test {
 impl pallet_kitties::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
+    type Randomness = Random;
 }
+
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
+    let _ = env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .is_test(true)
+        .try_init();
     frame_system::GenesisConfig::<Test>::default()
         .build_storage()
         .unwrap()

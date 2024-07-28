@@ -255,8 +255,10 @@ impl pallet_template::Config for Runtime {
 impl pallet_kitties::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_kitties::weights::SubstrateWeight<Runtime>;
+    type Randomness = Random;
 }
 
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 #[frame_support::runtime]
 mod runtime {
@@ -301,6 +303,9 @@ mod runtime {
 
     #[runtime::pallet_index(8)]
     pub type Kitties = pallet_kitties;
+
+    #[runtime::pallet_index(9)]
+    pub type Random = pallet_insecure_randomness_collective_flip;
 }
 
 /// The address format for describing accounts.

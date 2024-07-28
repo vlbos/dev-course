@@ -1,7 +1,6 @@
 use frame_support::pallet_macros::pallet_section;
 
-/// A [`pallet_section`] that defines the errors for a pallet.
-/// This can later be imported into the pallet using [`import_section`].
+/// Define all extrinsics for the pallet.
 #[pallet_section]
 mod dispatches {
     /// Dispatchable functions allow users to interact with the pallet and invoke state changes.
@@ -9,27 +8,43 @@ mod dispatches {
     /// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
+        pub fn create(origin: OriginFor<T>, something: u32) -> DispatchResult {
             let who = ensure_signed(origin)?;
+            let _value = Self::random_value();
 
-            Something::<T>::put(something);
+            // Something::<T>::put(something);
 
-            Self::deposit_event(Event::SomethingStored { something, who });
+            // Self::deposit_event(Event::SomethingStored { something, who });
 
             Ok(())
         }
 
-        pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
+        pub fn breed(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
+            Ok(())
 
-            match Something::<T>::get() {
-                None => Err(Error::<T>::NoneValue.into()),
-                Some(old) => {
-                    let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-                    Something::<T>::put(new);
-                    Ok(())
-                }
-            }
+            // match Something::<T>::get() {
+            //     None => Err(Error::<T>::NoneValue.into()),
+            //     Some(old) => {
+            //         let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
+            //         Something::<T>::put(new);
+            //         Ok(())
+            //     }
+            // }
+        }
+
+        pub fn transfer(origin: OriginFor<T>) -> DispatchResult {
+            let _who = ensure_signed(origin)?;
+            Ok(())
+
+            // match Something::<T>::get() {
+            //     None => Err(Error::<T>::NoneValue.into()),
+            //     Some(old) => {
+            //         let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
+            //         Something::<T>::put(new);
+            //         Ok(())
+            //     }
+            // }
         }
     }
 }
