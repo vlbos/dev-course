@@ -35,12 +35,22 @@ pub mod pallet {
     use frame_support::traits::Randomness;
     use frame_system::pallet_prelude::*;
 
+    #[derive(Encode, Decode, Clone, Default, TypeInfo)]
+    pub struct Kitty(pub [u8; 16]);
+
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    pub type Something<T> = StorageValue<_, u32>;
+    pub type NextKittyId<T> = StorageValue<_, u32, ValueQuery>;
 
     #[pallet::storage]
-    pub type SomeMap<T: Config> = StorageMap<_, _, T::AccountId, u32>;
+    pub type Kitties<T> = StorageMap<_, _, u32, Kitty>;
+
+    #[pallet::storage]
+    pub type KittyOwner<T: Config> = StorageMap<_, _, u32, T::AccountId>;
+
+    // bid price for each kitty, no redundant bid account
+    #[pallet::storage]
+    pub type KittiesBid<T: Config> = StorageMap<_, _, u32, Vec<(T::AccountId, u64)>>;
 }

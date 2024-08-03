@@ -10,7 +10,7 @@ mod dispatches {
     impl<T: Config> Pallet<T> {
         pub fn create(origin: OriginFor<T>, something: u32) -> DispatchResult {
             let who = ensure_signed(origin)?;
-            let _value = Self::random_value();
+            let _value = Self::random_value(&who);
 
             // Something::<T>::put(something);
 
@@ -34,6 +34,24 @@ mod dispatches {
         }
 
         pub fn transfer(origin: OriginFor<T>) -> DispatchResult {
+            let _who = ensure_signed(origin)?;
+            Ok(())
+
+            // match Something::<T>::get() {
+            //     None => Err(Error::<T>::NoneValue.into()),
+            //     Some(old) => {
+            //         let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
+            //         Something::<T>::put(new);
+            //         Ok(())
+            //     }
+            // }
+        }
+
+        pub fn sale(
+            origin: OriginFor<T>,
+            kitty_id: u32,
+            until_block: BlockNumberFor<T>,
+        ) -> DispatchResult {
             let _who = ensure_signed(origin)?;
             Ok(())
 

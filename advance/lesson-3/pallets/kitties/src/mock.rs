@@ -58,10 +58,11 @@ impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let _ = env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .is_test(true)
-        .try_init();
+    // let _ = env_logger::builder()
+    //     .filter_level(log::LevelFilter::Info)
+    //     .is_test(true)
+    //     .try_init();
+    sp_tracing::try_init_simple();
     frame_system::GenesisConfig::<Test>::default()
         .build_storage()
         .unwrap()
@@ -70,6 +71,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub fn run_to_block(n: u64) {
     while System::block_number() < n {
+        log::info!("current block: {:?}", System::block_number());
         Kitties::on_finalize(System::block_number());
         System::on_finalize(System::block_number());
         System::set_block_number(System::block_number() + 1);
