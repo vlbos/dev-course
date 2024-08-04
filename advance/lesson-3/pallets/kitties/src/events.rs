@@ -8,7 +8,7 @@ mod events {
         KittyCreated {
             creator: T::AccountId,
             index: u64,
-            data: [u8; 256],
+            data: [u8; 16],
         },
     }
 }

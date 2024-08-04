@@ -17,6 +17,7 @@ mod config;
 mod errors;
 mod events;
 mod extrinsics;
+mod genesis;
 mod hooks;
 mod impls;
 
@@ -27,6 +28,7 @@ mod impls;
 #[import_section(config::config)]
 #[import_section(hooks::hooks)]
 #[import_section(impls::impls)]
+#[import_section(genesis::genesis)]
 /// Set the pallet at dev mode for quick PoC.
 #[frame_support::pallet(dev_mode)]
 pub mod pallet {
@@ -34,8 +36,11 @@ pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_support::traits::Randomness;
     use frame_system::pallet_prelude::*;
+    use serde::{Deserialize, Serialize};
+    use sp_std::prelude::*;
+    use sp_weights::WeightMeter;
 
-    #[derive(Encode, Decode, Clone, Default, TypeInfo)]
+    #[derive(Encode, Decode, Clone, Default, TypeInfo, Serialize, Deserialize)]
     pub struct Kitty(pub [u8; 16]);
 
     #[pallet::pallet]
@@ -50,7 +55,7 @@ pub mod pallet {
     #[pallet::storage]
     pub type KittyOwner<T: Config> = StorageMap<_, _, u32, T::AccountId>;
 
-    // bid price for each kitty, no redundant bid account
+    // bid price for each kitty,
     #[pallet::storage]
     pub type KittiesBid<T: Config> = StorageMap<_, _, u32, Vec<(T::AccountId, u64)>>;
 }

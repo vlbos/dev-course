@@ -22,29 +22,11 @@ mod dispatches {
         pub fn breed(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
             Ok(())
-
-            // match Something::<T>::get() {
-            //     None => Err(Error::<T>::NoneValue.into()),
-            //     Some(old) => {
-            //         let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-            //         Something::<T>::put(new);
-            //         Ok(())
-            //     }
-            // }
         }
 
         pub fn transfer(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
             Ok(())
-
-            // match Something::<T>::get() {
-            //     None => Err(Error::<T>::NoneValue.into()),
-            //     Some(old) => {
-            //         let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-            //         Something::<T>::put(new);
-            //         Ok(())
-            //     }
-            // }
         }
 
         pub fn sale(
@@ -54,15 +36,11 @@ mod dispatches {
         ) -> DispatchResult {
             let _who = ensure_signed(origin)?;
             Ok(())
+        }
 
-            // match Something::<T>::get() {
-            //     None => Err(Error::<T>::NoneValue.into()),
-            //     Some(old) => {
-            //         let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-            //         Something::<T>::put(new);
-            //         Ok(())
-            //     }
-            // }
+        pub fn bid(origin: OriginFor<T>, kitty_id: u32, price: u64) -> DispatchResult {
+            let _who = ensure_signed(origin)?;
+            Ok(())
         }
     }
 }

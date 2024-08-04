@@ -3,6 +3,7 @@ use frame_support::traits::Hooks;
 use frame_support::{
     derive_impl,
     traits::{ConstU16, ConstU64},
+    weights::Weight,
 };
 use sp_core::H256;
 use sp_runtime::{
@@ -58,10 +59,6 @@ impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    // let _ = env_logger::builder()
-    //     .filter_level(log::LevelFilter::Info)
-    //     .is_test(true)
-    //     .try_init();
     sp_tracing::try_init_simple();
     frame_system::GenesisConfig::<Test>::default()
         .build_storage()
@@ -77,5 +74,6 @@ pub fn run_to_block(n: u64) {
         System::set_block_number(System::block_number() + 1);
         System::on_initialize(System::block_number());
         Kitties::on_initialize(System::block_number());
+        Kitties::on_idle(System::block_number(), Weight::default());
     }
 }
