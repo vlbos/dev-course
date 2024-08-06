@@ -33,8 +33,8 @@ mod hooks {
             assert!(NextKittyId::<T>::get() == 0);
         }
 
-        fn offchain_worker(_n: BlockNumberFor<T>) {
-            unimplemented!()
+        fn offchain_worker(n: BlockNumberFor<T>) {
+            log::info!("Kitties offchain_worker at block {:?}", n);
         }
 
         #[cfg(feature = "try-runtime")]
