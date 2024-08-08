@@ -13,7 +13,7 @@ mod impls {
             let a: BlockNumberFor<T> = TryFrom::try_from(nonce_u32)
                 .ok()
                 .expect("nonce is u32; qed");
-            // let bytes = nonce > 1;
+            // payload.using_encoded(blake2_128)
             [0_u8; 16]
         }
 
