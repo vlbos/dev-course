@@ -73,6 +73,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", t
 frame-system-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false, optional = true }
 
 # The pallet in this template.
+pallet-poe = { default-features = false, path = "../pallets/poe" }
 pallet-template = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false }
 
 [build-dependencies]
@@ -118,6 +119,7 @@ std = [
 	"sp-version/std",
 
 	"substrate-wasm-builder",
+    "pallet-poe/std",
 ]
 
 runtime-benchmarks = [
@@ -131,6 +133,7 @@ runtime-benchmarks = [
 	"pallet-template/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+"pallet-poe/runtime-benchmarks",
 ]
 
 try-runtime = [
