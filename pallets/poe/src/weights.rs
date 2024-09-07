@@ -46,12 +46,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: `PoeModule::Proofs` (r:1 w:1)
 	/// Proof: `PoeModule::Proofs` (`max_values`: None, `max_size`: Some(63), added: 2538, mode: `MaxEncodedLen`)
 	/// The range of component `c` is `[0, 10]`.
-	fn create_claim(_c: u32, ) -> Weight {
+	fn create_claim(c: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `3528`
-		// Minimum execution time: 20_000_000 picoseconds.
-		Weight::from_parts(22_399_719, 3528)
+		// Minimum execution time: 21_000_000 picoseconds.
+		Weight::from_parts(21_684_633, 3528)
+			// Standard Error: 16_203
+			.saturating_add(Weight::from_parts(8_792, 0).saturating_mul(c.into()))
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -63,9 +65,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		//  Measured:  `85 + c * (1 ±0)`
 		//  Estimated: `3528`
 		// Minimum execution time: 23_000_000 picoseconds.
-		Weight::from_parts(23_582_951, 3528)
-			// Standard Error: 16_898
-			.saturating_add(Weight::from_parts(115_061, 0).saturating_mul(c.into()))
+		Weight::from_parts(24_577_280, 3528)
+			// Standard Error: 22_966
+			.saturating_add(Weight::from_parts(2_357, 0).saturating_mul(c.into()))
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -77,9 +79,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		//  Measured:  `85 + c * (1 ±0)`
 		//  Estimated: `3528`
 		// Minimum execution time: 18_000_000 picoseconds.
-		Weight::from_parts(19_061_926, 3528)
-			// Standard Error: 14_269
-			.saturating_add(Weight::from_parts(26_758, 0).saturating_mul(c.into()))
+		Weight::from_parts(19_330_084, 3528)
+			// Standard Error: 18_179
+			.saturating_add(Weight::from_parts(19_686, 0).saturating_mul(c.into()))
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
@@ -90,12 +92,14 @@ impl WeightInfo for () {
 	/// Storage: `PoeModule::Proofs` (r:1 w:1)
 	/// Proof: `PoeModule::Proofs` (`max_values`: None, `max_size`: Some(63), added: 2538, mode: `MaxEncodedLen`)
 	/// The range of component `c` is `[0, 10]`.
-	fn create_claim(_c: u32, ) -> Weight {
+	fn create_claim(c: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `6`
 		//  Estimated: `3528`
-		// Minimum execution time: 20_000_000 picoseconds.
-		Weight::from_parts(22_399_719, 3528)
+		// Minimum execution time: 21_000_000 picoseconds.
+		Weight::from_parts(21_684_633, 3528)
+			// Standard Error: 16_203
+			.saturating_add(Weight::from_parts(8_792, 0).saturating_mul(c.into()))
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -107,9 +111,9 @@ impl WeightInfo for () {
 		//  Measured:  `85 + c * (1 ±0)`
 		//  Estimated: `3528`
 		// Minimum execution time: 23_000_000 picoseconds.
-		Weight::from_parts(23_582_951, 3528)
-			// Standard Error: 16_898
-			.saturating_add(Weight::from_parts(115_061, 0).saturating_mul(c.into()))
+		Weight::from_parts(24_577_280, 3528)
+			// Standard Error: 22_966
+			.saturating_add(Weight::from_parts(2_357, 0).saturating_mul(c.into()))
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
@@ -121,9 +125,9 @@ impl WeightInfo for () {
 		//  Measured:  `85 + c * (1 ±0)`
 		//  Estimated: `3528`
 		// Minimum execution time: 18_000_000 picoseconds.
-		Weight::from_parts(19_061_926, 3528)
-			// Standard Error: 14_269
-			.saturating_add(Weight::from_parts(26_758, 0).saturating_mul(c.into()))
+		Weight::from_parts(19_330_084, 3528)
+			// Standard Error: 18_179
+			.saturating_add(Weight::from_parts(19_686, 0).saturating_mul(c.into()))
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}

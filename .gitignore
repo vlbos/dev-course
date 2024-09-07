@@ -1,7 +1,7 @@
 !polkadot.service
 .cargo-remote.toml
 .direnv/
-.DS_Store
+**/.DS_Store
 .env*
 .idea
 .local
