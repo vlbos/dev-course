@@ -22,7 +22,8 @@ clap = { version = "4.5.3", features = ["derive"] }
 futures = { version = "0.3.21", features = ["thread-pool"] }
 serde_json = { workspace = true, default-features = true }
 jsonrpsee = { version = "0.22", features = ["server"] }
-
+sp-keystore={workspace=true}
+# solochain-template-runtime={workspace=true}
 # substrate client
 sc-cli = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" }
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" }

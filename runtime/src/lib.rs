@@ -9,7 +9,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, One, Verify},
+    traits::{BlakeTwo256, Block as BlockT,Extrinsic as ExtrinsicT, IdentifyAccount, NumberFor, One, Verify},
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
 };
@@ -248,6 +248,7 @@ impl pallet_sudo::Config for Runtime {
 
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
+    type AuthorityId = pallet_template::crypto::TestAuthId;
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 }
@@ -257,6 +258,137 @@ impl pallet_poe::Config for Runtime {
     type MaxClaimLength = ConstU32<10>;
     type WeightInfo = pallet_poe::weights::SubstrateWeight<Runtime>;
 }
+use codec::Encode;
+use sp_runtime::{generic::Era, SaturatedConversion};
+
+
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+    RuntimeCall: From<LocalCall>,
+{
+    fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		   call: RuntimeCall,
+       public: <Signature as Verify>::Signer,
+	     account: AccountId,
+	     nonce: Nonce,
+     ) -> Option<(RuntimeCall, <UncheckedExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload)> {
+	     let tip = 0;
+	     // take the biggest period possible.
+	     let period =
+		      BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
+	     let current_block = System::block_number()
+		      .saturated_into::<u64>()
+		      // The `System::block_number` is initialized with `n+1`,
+		      // so the actual block number is `n`.
+		      .saturating_sub(1);
+	     let era = Era::mortal(period, current_block);
+	     let extra = (
+		      frame_system::CheckNonZeroSender::<Runtime>::new(),
+		      frame_system::CheckSpecVersion::<Runtime>::new(),
+		      frame_system::CheckTxVersion::<Runtime>::new(),
+		      frame_system::CheckGenesis::<Runtime>::new(),
+		      frame_system::CheckEra::<Runtime>::from(era),
+		      frame_system::CheckNonce::<Runtime>::from(nonce),
+		      frame_system::CheckWeight::<Runtime>::new(),
+		      pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+	     );
+	     let raw_payload = SignedPayload::new(call, extra)
+		      .map_err(|e| {
+			       log::warn!("Unable to create signed payload: {:?}", e);
+		      })
+		      .ok()?;
+	     let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+	     let address = account;
+	     let (call, extra, _) = raw_payload.deconstruct();
+	     Some((call, (sp_runtime::MultiAddress::Id(address), signature, extra)))
+   }
+}
+
+impl frame_system::offchain::SigningTypes for Runtime {
+    type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+    type Signature = Signature;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+    RuntimeCall: From<C>,
+{
+    type Extrinsic = UncheckedExtrinsic;
+    type OverarchingCall = RuntimeCall;
+}
+
+
+// impl pallet_example_offchain_worker::Config for Test {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type AuthorityId = crypto::TestAuthId;
+// 	type GracePeriod = ConstU64<5>;
+// 	type UnsignedInterval = ConstU64<128>;
+// 	type UnsignedPriority = UnsignedPriority;
+// 	type MaxPrices = ConstU32<64>;
+// }
+
+// /// Submits a transaction with the node's public and signature type. Adheres to the signed extension
+// /// format of the chain.
+// impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+// where
+// 	RuntimeCall: From<LocalCall>,
+// {
+// 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+// 		call: RuntimeCall,
+// 		public: <Signature as Verify>::Signer,
+// 		account: AccountId,
+// 		nonce: <Runtime as frame_system::Config>::Nonce,
+// 	) -> Option<(RuntimeCall, <UncheckedExtrinsic as ExtrinsicT>::SignaturePayload)> {
+// 		use sp_runtime::traits::StaticLookup;
+// 		// take the biggest period possible.
+// 		let period =
+// 			BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
+
+// 		let current_block = System::block_number()
+// 			.saturated_into::<u64>()
+// 			// The `System::block_number` is initialized with `n+1`,
+// 			// so the actual block number is `n`.
+// 			.saturating_sub(1);
+// 		let tip = 0;
+// 		let extra: SignedExtra = (
+// 			frame_system::CheckNonZeroSender::<Runtime>::new(),
+// 			frame_system::CheckSpecVersion::<Runtime>::new(),
+// 			frame_system::CheckTxVersion::<Runtime>::new(),
+// 			frame_system::CheckGenesis::<Runtime>::new(),
+// 			frame_system::CheckMortality::<Runtime>::from(generic::Era::mortal(
+// 				period,
+// 				current_block,
+// 			)),
+// 			frame_system::CheckNonce::<Runtime>::from(nonce),
+// 			frame_system::CheckWeight::<Runtime>::new(),
+// 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+// 		);
+
+// 		let raw_payload = SignedPayload::new(call, extra)
+// 			.map_err(|e| {
+// 				log::warn!("Unable to create signed payload: {:?}", e);
+// 			})
+// 			.ok()?;
+// 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
+// 		let (call, extra, _) = raw_payload.deconstruct();
+// 		let address = <Runtime as frame_system::Config>::Lookup::unlookup(account);
+// 		Some((call, (address, signature, extra)))
+// 	}
+// }
+
+// impl frame_system::offchain::SigningTypes for Runtime {
+// 	type Public = <Signature as Verify>::Signer;
+// 	type Signature = Signature;
+// }
+
+// impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+// where
+// 	RuntimeCall: From<C>,
+// {
+// 	type Extrinsic = UncheckedExtrinsic;
+// 	type OverarchingCall = RuntimeCall;
+// }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 #[frame_support::runtime]
@@ -302,6 +434,9 @@ mod runtime {
 
     #[runtime::pallet_index(8)]
     pub type PoeModule = pallet_poe;
+
+    // #[runtime::pallet_index(9)]
+    // pub type OffchainWorker = pallet_example_offchain_worker;
 }
 
 /// The address format for describing accounts.
@@ -353,6 +488,7 @@ mod benches {
         [pallet_sudo, Sudo]
         [pallet_template, TemplateModule]
         [pallet_poe, PoeModule]
+
     );
 }
 

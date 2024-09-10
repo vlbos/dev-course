@@ -38,7 +38,8 @@
 
 // We make sure this pallet uses `no_std` for compiling to Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-
+extern crate alloc;
+use alloc::vec::Vec;
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -60,6 +61,34 @@ mod benchmarking;
 pub mod weights;
 pub use weights::*;
 
+
+use sp_core::{crypto::KeyTypeId};
+
+// ...
+
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"demo");
+
+// ...
+
+pub mod crypto {
+	use super::KEY_TYPE;
+	use sp_core::sr25519::Signature as Sr25519Signature;
+	use sp_runtime::{
+		app_crypto::{app_crypto, sr25519},
+		traits::Verify, MultiSignature, MultiSigner
+	};
+	app_crypto!(sr25519, KEY_TYPE);
+
+	pub struct TestAuthId;
+
+	// implemented for runtime
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+	type RuntimeAppPublic = Public;
+	type GenericSignature = sp_core::sr25519::Signature;
+	type GenericPublic = sp_core::sr25519::Public;
+	}
+}
+
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 #[frame_support::pallet]
 pub mod pallet {
@@ -67,6 +96,7 @@ pub mod pallet {
     use super::*;
     use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
+use frame_system::offchain::SendSignedTransaction;
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
@@ -79,7 +109,8 @@ pub mod pallet {
     /// These types are defined generically and made concrete when the pallet is declared in the
     /// `runtime/src/lib.rs` file of your chain.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::offchain::CreateSignedTransaction<Call<Self>> + frame_system::Config {
+        type AuthorityId: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>;
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// A type representing the weights required by the dispatchables of this pallet.
@@ -130,7 +161,122 @@ pub mod pallet {
         /// There was an attempt to increment the value in storage over `u32::MAX`.
         StorageOverflow,
     }
+#[pallet::hooks]
+impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	/// Offchain worker entry point.
+	///
+	/// By implementing `fn offchain_worker` you declare a new offchain worker.
+	/// This function will be called when the node is fully synced and a new best block is
+	/// successfully imported.
+	/// Note that it's not guaranteed for offchain workers to run on EVERY block, there might
+	/// be cases where some blocks are skipped, or for some the worker runs twice (re-orgs),
+	/// so the code should be able to handle that.
+	fn offchain_worker(block_number: BlockNumberFor<T>) {
+		log::info!("Hello from pallet-ocw.");
+		// The entry point of your code called by offchain worker
+let signer = frame_system::offchain::Signer::<T, T::AuthorityId>::all_accounts();
+	// Using `send_signed_transaction` associated type we create and submit a transaction
+	// representing the call we've just created.
+	// `send_signed_transaction()` return type is `Option<(Account<T>, Result<(), ()>)>`. It is:
+	//	 - `None`: no account is available for sending transaction
+	//	 - `Some((account, Ok(())))`: transaction is successfully sent
+	//	 - `Some((account, Err(())))`: error occurred when sending the transaction
 
+	let results = signer.send_signed_transaction(|_account| {
+		 Call::submit_data { payload: Vec::from([0]) }
+	});
+	for (acc, res) in &results {
+		match res {
+			Ok(()) => log::info!("[{:?}]: submit transaction success.", acc.id),
+			Err(e) => log::error!("[{:?}]: submit transaction failure. Reason: {:?}", acc.id, e),
+		}
+	}
+
+	// Ok(())
+
+
+// let value: u64 = 10;
+// 		// This is your call to on-chain extrinsic together with any necessary parameters.
+// 		let call = RuntimeCall::unsigned_extrinsic1 { key: value };
+
+// 		// `submit_unsigned_transaction` returns a type of `Result<(), ()>`
+// 		//	 ref: https://paritytech.github.io/substrate/master/frame_system/offchain/struct.SubmitTransaction.html
+// 		SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
+// 			.map_err(|_| {
+// 			log::error!("Failed in offchain_unsigned_tx");
+// 		});
+
+
+
+// let value: u64 = 10;
+
+// 		// Retrieve the signer to sign the payload
+// 		let signer = Signer::<T, T::AuthorityId>::any_account();
+
+// 		// `send_unsigned_transaction` is returning a type of `Option<(Account<T>, Result<(), ()>)>`.
+// 		//	 The returned result means:
+// 		//	 - `None`: no account is available for sending transaction
+// 		//	 - `Some((account, Ok(())))`: transaction is successfully sent
+// 		//	 - `Some((account, Err(())))`: error occurred when sending the transaction
+// 		if let Some((_, res)) = signer.send_unsigned_transaction(
+// 			// this line is to prepare and return payload
+// 			|acct| Payload { number, public: acct.public.clone() },
+// 			|payload, signature| RuntimeCall::some_extrinsics { payload, signature },
+// 		) {
+// 			match res {
+// 				Ok(()) => log::info!("unsigned tx with signed payload successfully sent.");
+// 				Err(()) => log::error!("sending unsigned tx with signed payload failed.");
+// 			};
+// 		} else {
+// 			// The case of `None`: no account is available for sending
+// 			log::error!("No local account available");
+// 		}
+	}
+
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo)]
+pub struct Payload<Public> {
+	number: u64,
+	public: Public,
+}
+
+impl<T: frame_system::offchain::SigningTypes> frame_system::offchain::SignedPayload<T> for Payload<T::Public> {
+	fn public(&self) -> T::Public {
+	self.public.clone()
+}
+}
+#[pallet::validate_unsigned]
+impl<T: Config> ValidateUnsigned for Pallet<T> {
+	type Call = Call<T>;
+
+		/// Validate unsigned call to this module.
+		///
+		/// By default unsigned transactions are disallowed, but implementing the validator
+		/// here we make sure that some particular calls (the ones produced by offchain worker)
+		/// are being whitelisted and marked as valid.
+		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+            let UNSIGNED_TXS_PRIORITY=3;
+			let valid_tx = |provide| ValidTransaction::with_tag_prefix("my-pallet")
+		.priority(UNSIGNED_TXS_PRIORITY) // please define `UNSIGNED_TXS_PRIORITY` before this line
+		.and_provides([&provide])
+		.longevity(3)
+		.propagate(true)
+		.build();
+match call {
+			Call::unsigned_extrinsic_with_signed_payload {
+			ref payload,
+			ref signature
+			} => {
+			if !frame_system::offchain::SignedPayload::<T>::verify::<T::AuthorityId>(payload, signature.clone()) {
+				return InvalidTransaction::BadProof.into();
+			}
+			valid_tx(b"unsigned_extrinsic_with_signed_payload".to_vec())
+			},
+			_ => InvalidTransaction::Call.into(),
+		}
+		}
+}
     /// The pallet's dispatchable functions ([`Call`]s).
     ///
     /// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -198,5 +344,23 @@ pub mod pallet {
                 }
             }
         }
+
+		#[pallet::call_index(2)]
+        #[pallet::weight({0})]
+        pub fn submit_data(origin: OriginFor<T>, payload: Vec<u8>) -> DispatchResultWithPostInfo {
+            let _who = ensure_signed(origin)?;
+            log::info!("OCW ==> in submit_data call: {:?}", payload);
+            Ok(().into())
+        }
+
+	    #[pallet::call_index(3)]
+		#[pallet::weight({0})]
+		pub fn unsigned_extrinsic_with_signed_payload(origin: OriginFor<T>, payload: Payload<T::Public>, _signature: T::Signature,) -> DispatchResult {
+			ensure_none(origin)?;
+
+            log::info!("OCW ==> in call unsigned_extrinsic_with_signed_payload: {:?}", payload.number);
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
     }
 }

@@ -56,7 +56,15 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
             executor,
         )?;
     let client = Arc::new(client);
-
+	if config.offchain_worker.enabled {
+use sp_keystore::Keystore;
+        let keystore = keystore_container.keystore();
+        sp_keystore::KeystorePtr::sr25519_generate_new(
+            &keystore,
+            solochain_template_runtime::pallet_template::KEY_TYPE,
+            Some("//Alice"),
+            ).expect("Creating key with account Alice should succeed.");
+    }
     let telemetry = telemetry.map(|(worker, telemetry)| {
         task_manager
             .spawn_handle()
