@@ -42,6 +42,7 @@ sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 log={workspace=true}
+sp-keystore={workspace=true}
 [features]
 default = ["std"]
 std = [
