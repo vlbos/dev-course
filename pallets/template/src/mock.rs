@@ -1,7 +1,7 @@
 use crate as pallet_template;
 use frame_support::{
-    derive_impl,
-    traits::{ConstU16, ConstU64},
+    derive_impl,parameter_types,
+    traits::{ConstU16, ConstU32,ConstU64},
 };
 use sp_core::{
     offchain::{testing, OffchainWorkerExt, TransactionPoolExt},
@@ -83,12 +83,19 @@ where
         Some((call, (nonce, ())))
     }
 }
-
+parameter_types! {
+	pub const UnsignedPriority: u64 = 1 << 20;
+}
 impl pallet_template::Config for Test {
     type AuthorityId = crate::crypto::TestAuthId;
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
     type BlockNumberProvider = System;
+	type GracePeriod = ConstU64<5>;
+	type UnsignedInterval = ConstU64<128>;
+	type UnsignedPriority = UnsignedPriority;
+	type MaxPrices = ConstU32<64>;
+    type MaxVecLen = ConstU32<64>;
 }
 
 // Build genesis storage according to the mock runtime.

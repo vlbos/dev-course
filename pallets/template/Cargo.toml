@@ -43,6 +43,7 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 log={workspace=true}
 sp-keystore={workspace=true}
+lite-json = { workspace = true }
 [features]
 default = ["std"]
 std = [

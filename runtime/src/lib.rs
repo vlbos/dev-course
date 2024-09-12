@@ -248,13 +248,20 @@ impl pallet_sudo::Config for Runtime {
     type RuntimeCall = RuntimeCall;
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
-
+parameter_types! {
+	pub const UnsignedPriority: u64 = 1 << 20;
+}
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
     type AuthorityId = pallet_template::crypto::TestAuthId;
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
     type BlockNumberProvider = System;
+	type GracePeriod = ConstU32<5>;
+	type UnsignedInterval = ConstU32<128>;
+	type UnsignedPriority = UnsignedPriority;
+	type MaxPrices = ConstU32<64>;
+    type MaxVecLen = ConstU32<64>;
 }
 
 impl pallet_poe::Config for Runtime {
