@@ -54,9 +54,10 @@ use sp_runtime::{
     offchain::{
         http,
         storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},
+        storage_lock::{BlockAndTime, StorageLock},
         Duration,
     },
-    traits::Zero,
+    traits::{BlockNumberProvider, Zero},
     transaction_validity::{InvalidTransaction, TransactionValidity, ValidTransaction},
     RuntimeDebug,
 };
@@ -141,6 +142,8 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// A type representing the weights required by the dispatchables of this pallet.
         type WeightInfo: WeightInfo;
+        /// Provider for the block number.
+        type BlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
     }
 
     /// A storage item for this pallet.
@@ -200,13 +203,50 @@ pub mod pallet {
         fn offchain_worker(block_number: BlockNumberFor<T>) {
             log::info!("Hello from pallet-ocw.");
             // The entry point of your code called by offchain worker
-            let one = BlockNumberFor::<T>::from(1u32);
-            let zero = BlockNumberFor::<T>::zero();
-            let _ = match block_number % 3u32.into() {
-                b if b == zero => Self::send_signed_tx(vec![0, 1, 2, 3]),
-                b if b == one => Self::send_unsigned_tx(42),
-                _ => Self::send_unsigned_tx_with_payload(1),
+            const FETCH_TIMEOUT_PERIOD: u64 = 3000; // in milli-seconds
+            const LOCK_TIMEOUT_EXPIRATION: u64 = FETCH_TIMEOUT_PERIOD + 1000; // in milli-seconds
+            const LOCK_BLOCK_EXPIRATION: u32 = 3; // in block number
+                                                  // Since off-chain storage can be accessed by off-chain workers from multiple runs, it is important to lock
+                                                  //   it before doing heavy computations or write operations.
+                                                  //
+                                                  // There are four ways of defining a lock:
+                                                  //   1) `new` - lock with default time and block exipration
+                                                  //   2) `with_deadline` - lock with default block but custom time expiration
+                                                  //   3) `with_block_deadline` - lock with default time but custom block expiration
+                                                  //   4) `with_block_and_time_deadline` - lock with custom time and block expiration
+                                                  // Here we choose the most custom one for demonstration purpose.
+            let mut lock = StorageLock::<BlockAndTime<Self>>::with_block_and_time_deadline(
+                b"offchain-demo::lock",
+                LOCK_BLOCK_EXPIRATION,
+                Duration::from_millis(LOCK_TIMEOUT_EXPIRATION),
+            );
+
+            // We try to acquire the lock here. If failed, we know the `fetch_n_parse` part inside is being
+            //   executed by previous run of ocw, so the function just returns.
+            if let Ok(_guard) = lock.try_lock() {
+                let _ = match block_number % 4u32.into() {
+                    b if b == BlockNumberFor::<T>::zero() => Self::send_signed_tx(vec![0, 1, 2, 3]),
+                    b if b == BlockNumberFor::<T>::from(1u32) => Self::send_unsigned_tx(42),
+                    b if b == BlockNumberFor::<T>::from(2u32) => {
+                        Self::send_unsigned_tx_with_payload(42)
+                    }
+                    _ => Self::send_unsigned_tx_with_payload_for_all_accounts(1),
+                };
             };
+            // Reading back the off-chain indexing value. It is exactly the same as reading from
+            // ocw local storage.
+            let key = Self::derived_key(block_number);
+            let oci_mem = StorageValueRef::persistent(&key);
+
+            if let Ok(Some(data)) = oci_mem.get::<IndexingData>() {
+                log::info!(
+                    "off-chain indexing data: {:?}, {:?}",
+                    alloc::str::from_utf8(&data.0).unwrap_or("error"),
+                    data.1
+                );
+            } else {
+                log::info!("no off-chain indexing data retrieved.");
+            }
         }
     }
 
@@ -318,6 +358,22 @@ pub mod pallet {
         pub fn submit_data(origin: OriginFor<T>, payload: Vec<u8>) -> DispatchResultWithPostInfo {
             let _who = ensure_signed(origin)?;
             log::info!("OCW ==> in submit_data call: {:?}", payload);
+
+            // Off-chain indexing allowing on-chain extrinsics to write to off-chain storage predictably
+            // so it can be read in off-chain worker context. As off-chain indexing is called in on-chain
+            // context, if it is agreed upon by the blockchain consensus mechanism, then it is expected
+            // to run predicably by all nodes in the network.
+            //
+            // From an on-chain perspective, this is write-only and cannot be read back.
+            //
+            // The value is written in byte form, so we need to encode/decode it when writting/reading
+            // a number to/from this memory space.
+            //
+            // Ref: https://docs.substrate.io/reference/how-to-guides/offchain-workers/offchain-indexing/
+            let key = Self::derived_key(frame_system::Pallet::<T>::block_number());
+            let data = IndexingData(b"submit_number_signed".to_vec(), payload[0] as u64);
+            sp_io::offchain_index::set(&key, &data.encode());
+
             Ok(().into())
         }
         #[pallet::call_index(3)]
@@ -346,6 +402,14 @@ pub mod pallet {
             Ok(())
         }
     }
+
+    impl<T: Config> BlockNumberProvider for Pallet<T> {
+        type BlockNumber = BlockNumberFor<T>;
+
+        fn current_block_number() -> Self::BlockNumber {
+            <frame_system::Pallet<T>>::block_number()
+        }
+    }
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, scale_info::TypeInfo)]
@@ -362,7 +426,23 @@ impl<T: frame_system::offchain::SigningTypes> frame_system::offchain::SignedPayl
     }
 }
 
+#[derive(RuntimeDebug, Encode, Decode, Default, scale_info::TypeInfo)]
+struct IndexingData(Vec<u8>, u64);
+
+const ONCHAIN_TX_KEY: &[u8] = b"ocw-demo::storage::tx";
+
 impl<T: Config> Pallet<T> {
+    fn derived_key(block_number: BlockNumberFor<T>) -> Vec<u8> {
+        block_number.using_encoded(|encoded_bn| {
+            ONCHAIN_TX_KEY
+                .clone()
+                .into_iter()
+                .chain(b"/".into_iter())
+                .chain(encoded_bn)
+                .copied()
+                .collect::<Vec<u8>>()
+        })
+    }
     fn send_signed_tx(payload: Vec<u8>) -> Result<(), &'static str> {
         let signer = Signer::<T, T::AuthorityId>::all_accounts();
         if !signer.can_sign() {

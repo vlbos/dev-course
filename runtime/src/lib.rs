@@ -254,6 +254,7 @@ impl pallet_template::Config for Runtime {
     type AuthorityId = pallet_template::crypto::TestAuthId;
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
+    type BlockNumberProvider = System;
 }
 
 impl pallet_poe::Config for Runtime {

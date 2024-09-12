@@ -88,6 +88,7 @@ impl pallet_template::Config for Test {
     type AuthorityId = crate::crypto::TestAuthId;
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
+    type BlockNumberProvider = System;
 }
 
 // Build genesis storage according to the mock runtime.
