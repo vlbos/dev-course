@@ -2,6 +2,10 @@ use crate::{mock::*, Error, Event};
 use frame_support::{assert_noop, assert_ok, pallet_prelude::*};
 
 use super::*;
+
+
+
+
 #[test]
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {
@@ -13,26 +17,33 @@ fn it_works_for_default_value() {
 fn it_works_for_sale() {
     new_test_ext().execute_with(|| {
         run_to_block(1);
-        let sale_account: u64 = 1;
-        let bid_account: u64 = 2;
+        let (owner, bidder, kitty_id, price, until_block) = (1, 2, 1, 20, 11);
+        assert_ok!(PalletKitties::create(RuntimeOrigin::signed(owner)));
 
-        // assert_ok!(Kittles::create(<<Test as Config>::RuntimeOrigin>::signed(
-        //     sale_account
-        // )));
-        // // sale kitty & with price 10
-        // assert_ok!(Kitties::sale(
-        //     <<Test as config>::Runtimeorigin>::signed(sale_account),
-        //     0,
-        //     10
-        // ));
-        // assert_eq!(crate::KittyOnSale::<Test>::get(0), Some(10));
+        // sale kitty & with price 10
+        assert_ok!(PalletKitties::sale(
+            RuntimeOrigin::signed(owner),
+            kitty_id,
+            until_block
+        ));
+        assert_eq!(
+            KittiesOnSale::<Test>::get(&until_block),
+            BoundedVec::<u32, <Test as Config>::MaxKittiesBidPerBlock>::try_from(vec![kitty_id])
+                .unwrap()
+        );
 
-        // run_to_block(2);
+        run_to_block(2);
 
-        // assert_ok!(Kitties::bid(<Test as Config>::RuntimcOrigin>>::signed(bid_account),0,100));
+        assert_ok!(PalletKitties::bid(
+            RuntimeOrigin::signed(bidder),
+            kitty_id,
+            price
+        ));
+        assert_eq!(KittiesBid::<Test>::get(kitty_id), Some((bidder, price)));
 
-        // run_to_block(10);
-        // assert_eq!(crate::KittyOwner::<Test>::get(0), Some(bid_account));
+
+        run_to_block(until_block);
+        assert_eq!(KittyOwner::<Test>::get(kitty_id), Some(bidder));
     });
 }
 
@@ -40,10 +51,12 @@ fn it_works_for_sale() {
 fn create_works() {
     new_test_ext().execute_with(|| {
         let (creator, kitty_id) = (1, 1);
+        let origin_reserved_balance=<Test as Config>::Currency::reserved_balance(&creator);
         assert_ok!(PalletKitties::create(RuntimeOrigin::signed(creator)));
         assert_eq!(NextKittyId::<Test>::get(), kitty_id);
         assert!(Kitties::<Test>::get(kitty_id).is_some());
         assert_eq!(KittyOwner::<Test>::get(kitty_id), Some(creator));
+        assert_eq!(<Test as Config>::Currency::reserved_balance(&creator), origin_reserved_balance+<<Test as Config>::StakeAmount as Get<u128>>::get());
         System::assert_has_event(
             Event::<Test>::KittyCreated {
                 creator,

@@ -83,9 +83,10 @@ mod impls {
             bids.iter().for_each(|&kitty_id| {
                 if let Some((bidder, price)) = KittiesBid::<T>::take(kitty_id) {
                     let owner = Self::kitty_owner(kitty_id).expect("Invalid kitty id");
-                    if price >= T::Currency::reserved_balance(&bidder) {
-                        T::Currency::unreserve(&bidder, price);
-                        if T::Currency::transfer(
+                    if  T::Currency::reserved_balance(&bidder) >=price {
+                        let actual_unreserve_balance=T::Currency::unreserve(&bidder, price);
+                        if actual_unreserve_balance<price
+                        {if T::Currency::transfer(
                             &bidder,
                             &owner,
                             price,
@@ -107,10 +108,19 @@ mod impls {
                                 bidder,
                                 kitty_id
                             );
+                        }}else{
+                            T::Currency::reserve(&bidder, actual_unreserve_balance);
+                            log::error!(
+                            "Kitties bid Currency::unreserve failed at block {:?}, {:?},{:?},{}",
+                            until_block,
+                            owner,
+                            bidder,
+                            kitty_id
+                        );
                         }
                     } else {
                         log::error!(
-                            "Kitties bid Currency::unreserve failed at block {:?}, {:?},{:?},{}",
+                            "Kitties bid Currency::reserved_balacne less than price at block {:?}, {:?},{:?},{}",
                             until_block,
                             owner,
                             bidder,

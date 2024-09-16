@@ -68,6 +68,7 @@ impl pallet_kitties::Config for Test {
     type Currency = Balances;
     type StakeAmount = ConstU128<2>;
     type MinBidAmount = ConstU128<5>;
+    type MinBidIncrement = ConstU128<5>;
     type MinBlockSpan = ConstU64<10>;
     type MaxKittiesBidPerBlock = ConstU32<10>;
 }

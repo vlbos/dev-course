@@ -80,7 +80,7 @@ mod dispatches {
                 KittiesBid::<T>::try_get(kitty_id).map_err(|_| Error::<T>::KittyNotOnSale)?;
             let stake_amount = T::StakeAmount::get();
             if let Some((last_bidder, last_price)) = last_bid {
-                ensure!(price > last_price, Error::<T>::KittyBidTooLow);
+                ensure!(price > last_price+T::MinBidIncrement::get(), Error::<T>::KittyBidTooLow);
                 T::Currency::unreserve(&last_bidder, last_price + stake_amount);
             } else {
                 ensure!(
@@ -90,7 +90,7 @@ mod dispatches {
             }
             let bidder_balance = T::Currency::free_balance(&who);
             ensure!(
-                bidder_balance > (price + stake_amount),
+                bidder_balance >= (price + stake_amount),
                 Error::<T>::NotEnoughBalanceForBid
             );
             T::Currency::reserve(&who, price + stake_amount)

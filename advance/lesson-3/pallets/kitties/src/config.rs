@@ -20,6 +20,9 @@ mod config {
         type MinBidAmount: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
+        type MinBidIncrement: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
         type MinBlockSpan: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
