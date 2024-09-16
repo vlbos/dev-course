@@ -8,6 +8,19 @@ mod errors {
     pub enum Error<T> {
         InvalidKittyId,
         NotOwner,
-        SameKittyId,
+        SameParentId,
+        KittyNotExist,
+        KittyAlreadyOnSale,
+        TooManyBidOnOneBlock,
+        BidForSelf,
+        KittyNotOnSale,
+        KittyBidTooLow,
+        KittyBidMustBeLargerThanOrEqualToMinBid,
+        NotEnoughBalanceForBid,
+        NotEnoughBalanceForBidAndStaking,
+        NextKittyIdOverflow,
+        NotEnoughBalanceForStaking,
+        TransferToSelf,
+        BlockSpanTooSmall,
     }
 }

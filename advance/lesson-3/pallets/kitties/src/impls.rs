@@ -13,20 +13,121 @@ mod impls {
             let a: BlockNumberFor<T> = TryFrom::try_from(nonce_u32)
                 .ok()
                 .expect("nonce is u32; qed");
-            // payload.using_encoded(blake2_128)
-            [0_u8; 16]
+            (
+                T::Randomness::random_seed(),
+                a,
+                <frame_system::Pallet<T>>::extrinsic_index(),
+            )
+                .using_encoded(sp_io::hashing::blake2_128)
         }
 
-        // breed on kitty based on both paraent kitties
-        fn breed_kitty(who: &T::AccountId, kitty_1: [u8; 16], kitty_2: [u8; 16]) -> [u8; 16] {
-            let selector = Self::random_value(&who);
+        fn mint_kitty(who: &T::AccountId, data: [u8; 16]) -> DispatchResult {
+            let kitty_id = Self::next_kitty_id()
+                .checked_add(1)
+                .ok_or(Error::<T>::NextKittyIdOverflow)?;
 
-            let mut data = [0u8; 16];
-            for i in 0..kitty_1.len() {
-                // 0 choose kitty2, and 1 choose kitty1
-                data[i] = (kitty_1[i] & selector[i]) | (kitty_2[i] & !selector[i]);
-            }
-            data
+            let stake_amount = T::StakeAmount::get();
+
+            T::Currency::reserve(&who, stake_amount)
+                .map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
+
+            Kitties::<T>::insert(kitty_id, Kitty(data.clone()));
+            KittyOwner::<T>::insert(kitty_id, who.clone());
+            NextKittyId::<T>::put(kitty_id);
+
+            Self::deposit_event(Event::KittyCreated {
+                creator: who.clone(),
+                kitty_id,
+                data,
+            });
+
+            Ok(())
+        }
+
+        // breed on kitty based on both parent kitties
+        fn breed_kitty(who: &T::AccountId, kitty_1: [u8; 16], kitty_2: [u8; 16]) -> [u8; 16] {
+            use core::convert::TryInto;
+            kitty_1
+                .into_iter()
+                .zip(kitty_2)
+                .zip(Self::random_value(who))
+                .map(|((k1, k2), s)| (k1 & s) | (k2 & !s))
+                .collect::<Vec<_>>()
+                .try_into()
+                .expect("convert Vec<u8> to [u8; 16] failed")
+        }
+        fn transfer_kitty(from: T::AccountId, to: T::AccountId, kitty_id: u32) -> DispatchResult {
+            ensure!(from != to, Error::<T>::TransferToSelf);
+
+            ensure!(
+                Self::kitty_owner(kitty_id).as_ref() == Some(&from),
+                Error::<T>::NotOwner
+            );
+
+            let stake_amount = T::StakeAmount::get();
+
+            T::Currency::reserve(&to, stake_amount)
+                .map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
+            T::Currency::unreserve(&from, stake_amount);
+
+            <KittyOwner<T>>::insert(kitty_id, to.clone());
+
+            Self::deposit_event(Event::KittyTransferred { from, to, kitty_id });
+
+            Ok(())
+        }
+
+        fn trade(until_block: BlockNumberFor<T>) -> DispatchResult {
+            let bids = KittiesOnSale::<T>::take(until_block);
+
+            bids.iter().for_each(|&kitty_id| {
+                if let Some((bidder, price)) = KittiesBid::<T>::take(kitty_id) {
+                    let owner = Self::kitty_owner(kitty_id).expect("Invalid kitty id");
+                    if price >= T::Currency::reserved_balance(&bidder) {
+                        T::Currency::unreserve(&bidder, price);
+                        if T::Currency::transfer(
+                            &bidder,
+                            &owner,
+                            price,
+                            frame_support::traits::ExistenceRequirement::KeepAlive,
+                        )
+                        .is_ok()
+                        {
+                            <KittyOwner<T>>::insert(kitty_id, bidder.clone());
+                            Self::deposit_event(Event::KittyTransferred {
+                                from: owner,
+                                to: bidder,
+                                kitty_id,
+                            });
+                        } else {
+                            log::error!(
+                                "Kitties bid Currency::transfer failed at block {:?}, {:?},{:?},{}",
+                                until_block,
+                                owner,
+                                bidder,
+                                kitty_id
+                            );
+                        }
+                    } else {
+                        log::error!(
+                            "Kitties bid Currency::unreserve failed at block {:?}, {:?},{:?},{}",
+                            until_block,
+                            owner,
+                            bidder,
+                            kitty_id
+                        );
+                    }
+                } else {
+                    log::warn!(
+                        "Kitties bid abortive  at block {:?}, {:?},{}",
+                        until_block,
+                        Self::kitty_owner(kitty_id),
+                        kitty_id
+                    );
+                }
+            });
+
+            Ok(())
         }
     }
 }

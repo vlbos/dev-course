@@ -12,5 +12,17 @@ mod config {
         type WeightInfo: WeightInfo;
         /// A random value generator.
         type Randomness: Randomness<Self::Hash, BlockNumberFor<Self>>;
+        type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+        #[pallet::constant]
+        type StakeAmount: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
+        type MinBidAmount: Get<BalanceOf<Self>>;
+
+        #[pallet::constant]
+        type MinBlockSpan: Get<BlockNumberFor<Self>>;
+
+        #[pallet::constant]
+        type MaxKittiesBidPerBlock: Get<u32>;
     }
 }
