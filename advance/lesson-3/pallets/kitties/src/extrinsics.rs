@@ -50,13 +50,14 @@ mod dispatches {
                 Error::<T>::NotOwner
             );
             ensure!(
-                until_block >= <system::Pallet<T>>::block_number() + T::MinBlockSpan::get(),
-                Error::<T>::BlockSpanTooSmall
-            );
-            ensure!(
                 !KittiesBid::<T>::contains_key(kitty_id),
                 Error::<T>::KittyAlreadyOnSale
             );
+            ensure!(
+                until_block >= <system::Pallet<T>>::block_number() + T::MinBidBlockSpan::get(),
+                Error::<T>::BlockSpanTooSmall
+            );
+
             KittiesOnSale::<T>::try_append(&until_block, kitty_id)
                 .map_err(|_| Error::<T>::TooManyBidOnOneBlock)?;
             KittiesBid::<T>::insert(kitty_id, Option::<(T::AccountId, BalanceOf<T>)>::default());
@@ -80,19 +81,18 @@ mod dispatches {
                 KittiesBid::<T>::try_get(kitty_id).map_err(|_| Error::<T>::KittyNotOnSale)?;
             let stake_amount = T::StakeAmount::get();
             if let Some((last_bidder, last_price)) = last_bid {
-                ensure!(price > last_price+T::MinBidIncrement::get(), Error::<T>::KittyBidTooLow);
+                ensure!(
+                    price >= last_price + T::MinBidIncrement::get(),
+                    Error::<T>::KittyBidLessThanTheSumOfLastPriceAndMinimumBidIncrement
+                );
                 T::Currency::unreserve(&last_bidder, last_price + stake_amount);
             } else {
                 ensure!(
-                    price > T::MinBidAmount::get(),
-                    Error::<T>::KittyBidMustBeLargerThanOrEqualToMinBid
+                    price >= T::MinBidAmount::get(),
+                    Error::<T>::KittyBidLessThanOrMinimumBidAmount
                 );
             }
-            let bidder_balance = T::Currency::free_balance(&who);
-            ensure!(
-                bidder_balance >= (price + stake_amount),
-                Error::<T>::NotEnoughBalanceForBid
-            );
+
             T::Currency::reserve(&who, price + stake_amount)
                 .map_err(|_| Error::<T>::NotEnoughBalanceForBidAndStaking)?;
             KittiesBid::<T>::insert(kitty_id, Some((who.clone(), price)));

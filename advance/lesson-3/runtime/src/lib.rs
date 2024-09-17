@@ -260,7 +260,7 @@ impl pallet_kitties::Config for Runtime {
     type StakeAmount = ConstU128<2>;
     type MinBidAmount = ConstU128<5>;
     type MinBidIncrement = ConstU128<5>;
-    type MinBlockSpan = ConstU32<10>;
+    type MinBidBlockSpan = ConstU32<10>;
     type MaxKittiesBidPerBlock = ConstU32<10>;
 }
 

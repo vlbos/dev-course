@@ -23,7 +23,7 @@ mod config {
         type MinBidIncrement: Get<BalanceOf<Self>>;
 
         #[pallet::constant]
-        type MinBlockSpan: Get<BlockNumberFor<Self>>;
+        type MinBidBlockSpan: Get<BlockNumberFor<Self>>;
 
         #[pallet::constant]
         type MaxKittiesBidPerBlock: Get<u32>;

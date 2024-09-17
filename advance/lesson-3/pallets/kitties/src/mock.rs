@@ -2,14 +2,10 @@ use crate as pallet_kitties;
 use frame_support::traits::Hooks;
 use frame_support::{
     derive_impl,
-    traits::{ConstU128, ConstU16, ConstU32, ConstU64},
+    traits::{ConstU128,  ConstU32, ConstU64},
     weights::Weight,
 };
-use sp_core::H256;
-use sp_runtime::{
-    traits::{BlakeTwo256, IdentityLookup},
-    BuildStorage,
-};
+use sp_runtime::BuildStorage;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -69,7 +65,7 @@ impl pallet_kitties::Config for Test {
     type StakeAmount = ConstU128<2>;
     type MinBidAmount = ConstU128<5>;
     type MinBidIncrement = ConstU128<5>;
-    type MinBlockSpan = ConstU64<10>;
+    type MinBidBlockSpan = ConstU64<10>;
     type MaxKittiesBidPerBlock = ConstU32<10>;
 }
 

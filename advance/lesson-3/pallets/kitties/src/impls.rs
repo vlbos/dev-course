@@ -80,62 +80,60 @@ mod impls {
         fn trade(until_block: BlockNumberFor<T>) -> DispatchResult {
             let bids = KittiesOnSale::<T>::take(until_block);
 
-            bids.iter().for_each(|&kitty_id| {
-                if let Some((bidder, price)) = KittiesBid::<T>::take(kitty_id) {
-                    let owner = Self::kitty_owner(kitty_id).expect("Invalid kitty id");
-                    if  T::Currency::reserved_balance(&bidder) >=price {
-                        let actual_unreserve_balance=T::Currency::unreserve(&bidder, price);
-                        if actual_unreserve_balance<price
-                        {if T::Currency::transfer(
-                            &bidder,
-                            &owner,
-                            price,
-                            frame_support::traits::ExistenceRequirement::KeepAlive,
-                        )
-                        .is_ok()
-                        {
-                            <KittyOwner<T>>::insert(kitty_id, bidder.clone());
-                            Self::deposit_event(Event::KittyTransferred {
-                                from: owner,
-                                to: bidder,
-                                kitty_id,
-                            });
-                        } else {
-                            log::error!(
-                                "Kitties bid Currency::transfer failed at block {:?}, {:?},{:?},{}",
+            for kitty_id in bids {
+                let Some((bidder, price)) = KittiesBid::<T>::take(kitty_id) else {
+                    log::warn!(
+                        "Kitties bid unsold  at block {:?}, {:?},{}",
+                        until_block,
+                        Self::kitty_owner(kitty_id),
+                        kitty_id
+                    );
+                    continue;
+                };
+                let owner = Self::kitty_owner(kitty_id).expect("Invalid kitty id");
+                if T::Currency::reserved_balance(&bidder) < price {
+                    log::warn!(
+                            "Unexpected Kitties bid Currency::reserved_balacne less than price at block {:?}, {:?},{:?},{}",
+                            until_block,
+                            owner,
+                            bidder,
+                            kitty_id
+                        );
+                }
+                let actual_unreserve_balance = T::Currency::unreserve(&bidder, price);
+                if actual_unreserve_balance < price {
+                    log::warn!(
+                                "Unexpected Kitties bid Currency::unreserve less than price  at block {:?}, {:?},{:?},{}",
                                 until_block,
                                 owner,
                                 bidder,
                                 kitty_id
                             );
-                        }}else{
-                            T::Currency::reserve(&bidder, actual_unreserve_balance);
-                            log::error!(
-                            "Kitties bid Currency::unreserve failed at block {:?}, {:?},{:?},{}",
-                            until_block,
-                            owner,
-                            bidder,
-                            kitty_id
-                        );
-                        }
-                    } else {
-                        log::error!(
-                            "Kitties bid Currency::reserved_balacne less than price at block {:?}, {:?},{:?},{}",
-                            until_block,
-                            owner,
-                            bidder,
-                            kitty_id
-                        );
-                    }
+                }
+                if T::Currency::transfer(
+                    &bidder,
+                    &owner,
+                    price,
+                    frame_support::traits::ExistenceRequirement::KeepAlive,
+                )
+                .is_ok()
+                {
+                    <KittyOwner<T>>::insert(kitty_id, bidder.clone());
+                    Self::deposit_event(Event::KittyTransferred {
+                        from: owner,
+                        to: bidder,
+                        kitty_id,
+                    });
                 } else {
-                    log::warn!(
-                        "Kitties bid abortive  at block {:?}, {:?},{}",
+                    log::error!(
+                        "Kitties bid Currency::transfer failed at block {:?}, {:?},{:?},{}",
                         until_block,
-                        Self::kitty_owner(kitty_id),
+                        owner,
+                        bidder,
                         kitty_id
                     );
                 }
-            });
+            }
 
             Ok(())
         }
