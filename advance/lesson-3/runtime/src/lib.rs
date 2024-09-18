@@ -257,9 +257,9 @@ impl pallet_kitties::Config for Runtime {
     type WeightInfo = pallet_kitties::weights::SubstrateWeight<Runtime>;
     type Randomness = Random;
     type Currency = Balances;
-    type StakeAmount = ConstU128<2>;
-    type MinBidAmount = ConstU128<5>;
-    type MinBidIncrement = ConstU128<5>;
+    type StakeAmount = ConstU128<200>;
+    type MinBidAmount = ConstU128<500>;
+    type MinBidIncrement = ConstU128<500>;
     type MinBidBlockSpan = ConstU32<10>;
     type MaxKittiesBidPerBlock = ConstU32<10>;
 }

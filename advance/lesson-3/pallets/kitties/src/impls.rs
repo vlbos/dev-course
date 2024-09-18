@@ -26,7 +26,7 @@ mod impls {
                 .checked_add(1)
                 .ok_or(Error::<T>::NextKittyIdOverflow)?;
 
-            let stake_amount = T::StakeAmount::get();
+            let stake_amount = T::StakeAmount::get() ;
 
             T::Currency::reserve(&who, stake_amount)
                 .map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
@@ -110,6 +110,17 @@ mod impls {
                                 kitty_id
                             );
                 }
+                if T::Currency::free_balance(
+                    &bidder)<price {
+                            log::warn!(
+                                "Unexpected Kitties bid free_balance less than price  at block {:?}, {:?},{:?},{}",
+                                until_block,
+                                owner,
+                                bidder,
+                                kitty_id
+                            );
+                }
+
                 if T::Currency::transfer(
                     &bidder,
                     &owner,
@@ -118,15 +129,22 @@ mod impls {
                 )
                 .is_ok()
                 {
+                    log::info!(
+                        "Kitties bid Currency::transfer  at block {:?}, {:?},{:?},{},",
+                        until_block,
+                        owner,
+                        bidder,
+                        kitty_id
+                    );
                     <KittyOwner<T>>::insert(kitty_id, bidder.clone());
                     Self::deposit_event(Event::KittyTransferred {
                         from: owner,
                         to: bidder,
                         kitty_id,
-                    });
+                    },);
                 } else {
-                    log::error!(
-                        "Kitties bid Currency::transfer failed at block {:?}, {:?},{:?},{}",
+                    log::warn!(
+                        "Kitties bid Currency::transfer failed at block {:?},{:?},{:?},{}",
                         until_block,
                         owner,
                         bidder,

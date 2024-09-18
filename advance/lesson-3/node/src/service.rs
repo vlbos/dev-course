@@ -11,6 +11,15 @@ use solochain_template_runtime::{self, opaque::Block, RuntimeApi};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
 
+// #[cfg(not(feature = "runtime-benchmarks"))]
+// type HostFunctions =sp_io::SubstrateHostFunctions;
+
+#[cfg(feature = "runtime-benchmarks")]
+type HostFunctions = (
+    sp_io::SubstrateHostFunctions,
+    frame_benchmarking::benchmarking::HostFunctions,
+);
+
 pub(crate) type FullClient = sc_service::TFullClient<
     Block,
     RuntimeApi,
