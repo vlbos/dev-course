@@ -7764,6 +7764,7 @@ name = "solochain-template-node"
 version = "0.0.0"
 dependencies = [
  "clap",
+ "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
  "futures",
