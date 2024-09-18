@@ -2,7 +2,7 @@ use crate as pallet_kitties;
 use frame_support::traits::Hooks;
 use frame_support::{
     derive_impl,
-    traits::{ConstU128,  ConstU32, ConstU64},
+    traits::{ConstU128, ConstU32, ConstU64},
     weights::Weight,
 };
 use sp_runtime::BuildStorage;

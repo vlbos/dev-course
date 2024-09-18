@@ -15,12 +15,20 @@ mod dispatches {
         }
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::breed())]
-        pub fn breed(origin: OriginFor<T>, kitty_1: u32, kitty_2: u32) -> DispatchResult {
+        pub fn breed(origin: OriginFor<T>, kitty_id_1: u32, kitty_id_2: u32) -> DispatchResult {
             let who = ensure_signed(origin)?;
-            ensure!(kitty_1 != kitty_2, Error::<T>::SameParentId);
+            ensure!(kitty_id_1 != kitty_id_2, Error::<T>::SameParentId);
             let (Kitty(kitty_1), Kitty(kitty_2)) = (
-                Self::kitties(kitty_1).ok_or(Error::<T>::KittyNotExist)?,
-                Self::kitties(kitty_2).ok_or(Error::<T>::KittyNotExist)?,
+                Self::kitties(kitty_id_1).ok_or(Error::<T>::KittyNotExist)?,
+                Self::kitties(kitty_id_2).ok_or(Error::<T>::KittyNotExist)?,
+            );
+            ensure!(
+                Self::kitty_owner(kitty_id_1).as_ref() == Some(&who),
+                Error::<T>::NotOwner
+            );
+            ensure!(
+                Self::kitty_owner(kitty_id_2).as_ref() == Some(&who),
+                Error::<T>::NotOwner
             );
             let value = Self::breed_kitty(&who, kitty_1, kitty_2);
             Self::mint_kitty(&who, value)?;
