@@ -495,6 +495,86 @@ fn bid_works() {
 }
 
 #[test]
+fn bid_works_when_the_second_bidder() {
+    new_test_ext().execute_with(|| {
+        let (owner, bidder, bidder2, kitty_id, price, until_block) = (1, 2, 3, 1, 500, 11);
+        assert_ok!(PalletKitties::create(RuntimeOrigin::signed(owner)));
+        assert_ok!(PalletKitties::sale(
+            RuntimeOrigin::signed(owner),
+            kitty_id,
+            until_block
+        ));
+        let origin_reserved_balance = <Test as Config>::Currency::reserved_balance(&bidder);
+        let origin_free_balance = <Test as Config>::Currency::free_balance(&bidder);
+        assert_ok!(PalletKitties::bid(
+            RuntimeOrigin::signed(bidder),
+            kitty_id,
+            price
+        ));
+        assert_eq!(KittiesBid::<Test>::get(kitty_id), Some((bidder, price)));
+        let stake_amount = <<Test as Config>::StakeAmount as Get<u128>>::get();
+        assert_eq!(
+            <Test as Config>::Currency::reserved_balance(&bidder),
+            origin_reserved_balance + price + stake_amount
+        );
+        assert_eq!(
+            <Test as Config>::Currency::free_balance(&bidder),
+            origin_free_balance - price - stake_amount
+        );
+        System::assert_has_event(
+            Event::<Test>::KittyBid {
+                bidder,
+                kitty_id,
+                price,
+            }
+            .into(),
+        );
+
+        let (last_bidder, last_price) = (bidder, price);
+        let (bidder, price) = (
+            bidder2,
+            last_price + <<Test as Config>::MinBidIncrement as Get<u128>>::get(),
+        );
+        let origin_reserved_balance = <Test as Config>::Currency::reserved_balance(&bidder);
+        let origin_free_balance = <Test as Config>::Currency::free_balance(&bidder);
+        let origin_reserved_balance_of_last_bidder =
+            <Test as Config>::Currency::reserved_balance(&last_bidder);
+        let origin_free_balance_of_last_bidder =
+            <Test as Config>::Currency::free_balance(&last_bidder);
+        assert_ok!(PalletKitties::bid(
+            RuntimeOrigin::signed(bidder),
+            kitty_id,
+            price
+        ));
+        assert_eq!(KittiesBid::<Test>::get(kitty_id), Some((bidder, price)));
+        assert_eq!(
+            <Test as Config>::Currency::reserved_balance(&bidder),
+            origin_reserved_balance + price + stake_amount
+        );
+        assert_eq!(
+            <Test as Config>::Currency::free_balance(&bidder),
+            origin_free_balance - price - stake_amount
+        );
+        assert_eq!(
+            <Test as Config>::Currency::reserved_balance(&last_bidder),
+            origin_reserved_balance_of_last_bidder - last_price - stake_amount
+        );
+        assert_eq!(
+            <Test as Config>::Currency::free_balance(&last_bidder),
+            origin_free_balance_of_last_bidder + last_price + stake_amount
+        );
+        System::assert_has_event(
+            Event::<Test>::KittyBid {
+                bidder,
+                kitty_id,
+                price,
+            }
+            .into(),
+        );
+    });
+}
+
+#[test]
 fn bid_failed_when_bid_for_self() {
     new_test_ext().execute_with(|| {
         let (owner, kitty_id, price, until_block) = (1, 1, 500, 11);
