@@ -21,7 +21,7 @@ fn it_works_for_sale() {
         let (owner, bidder, kitty_id, price, until_block) = (1, 2, 1, 500, 11);
         assert_ok!(PalletKitties::create(RuntimeOrigin::signed(owner)));
 
-        // sale kitty & with price 10
+        // sale kitty & with price
         assert_ok!(PalletKitties::sale(
             RuntimeOrigin::signed(owner),
             kitty_id,
@@ -41,9 +41,29 @@ fn it_works_for_sale() {
             price
         ));
         assert_eq!(KittiesBid::<Test>::get(kitty_id), Some((bidder, price)));
-
+        let origin_reserved_balance_of_owner = <Test as Config>::Currency::reserved_balance(&owner);
+        let origin_free_balance_of_owner = <Test as Config>::Currency::free_balance(&owner);
+        let origin_reserved_balance = <Test as Config>::Currency::reserved_balance(&bidder);
+        let origin_free_balance = <Test as Config>::Currency::free_balance(&bidder);
         run_to_block(until_block);
         assert_eq!(KittyOwner::<Test>::get(kitty_id), Some(bidder));
+        assert_eq!(
+            <Test as Config>::Currency::reserved_balance(&bidder),
+            origin_reserved_balance - price
+        );
+        assert_eq!(
+            <Test as Config>::Currency::free_balance(&bidder),
+            origin_free_balance
+        );
+        let stake_amount = <<Test as Config>::StakeAmount as Get<u128>>::get();
+        assert_eq!(
+            <Test as Config>::Currency::reserved_balance(&owner),
+            origin_reserved_balance_of_owner - stake_amount
+        );
+        assert_eq!(
+            <Test as Config>::Currency::free_balance(&owner),
+            origin_free_balance_of_owner + price + stake_amount
+        );
         System::assert_has_event(
             Event::<Test>::KittyTransferred {
                 from: owner,

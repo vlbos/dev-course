@@ -135,6 +135,7 @@ mod impls {
                         bidder,
                         kitty_id
                     );
+                    T::Currency::unreserve(&owner, T::StakeAmount::get());
                     <KittyOwner<T>>::insert(kitty_id, bidder.clone());
                     Self::deposit_event(Event::KittyTransferred {
                         from: owner,
