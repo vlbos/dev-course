@@ -27,5 +27,17 @@ mod events {
             kitty_id: u32,
             price: BalanceOf<T>,
         },
+        KittyTransferredAfterBidPass {
+            from: T::AccountId,
+            to: T::AccountId,
+            kitty_id: u32,
+            price: BalanceOf<T>,
+            usd_price: Option<BalanceOf<T>>,
+        },
+        /// Event generated when new price is accepted to contribute to the average.
+        NewPrice {
+            price: u32,
+            maybe_who: Option<T::AccountId>,
+        },
     }
 }

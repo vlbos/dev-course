@@ -27,18 +27,20 @@ scale-info = { version = "2.10.0", default-features = false, features = [
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false, optional = true }
 frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false }
 frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false }
+lite-json = { version = "0.2.0", default-features = false }
 
 log = { version = "0.4.21", default-features = false }
 sp-std = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false  }
+sp-keystore = {  git = 'https://github.com/paritytech/polkadot-sdk.git', tag = "polkadot-v1.10.0",default-features = false }
 
 sp-weights = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false  }
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" , default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false  }
-
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" , default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" , default-features = false }
+getrandom = {version = "0.2", default-features = false, features = ["custom"]}
 [dev-dependencies]
 pallet-insecure-randomness-collective-flip = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0", default-features = false }
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" }
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" }
 sp-tracing = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.10.0" }
 env_logger = "0.11.5"
 
@@ -50,11 +52,13 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"scale-info/std",
+	"lite-json/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
 	"sp-weights/std",
 	"sp-runtime/std",
+	"sp-keystore/std",
     "pallet-balances/std",
 ]
 runtime-benchmarks = [

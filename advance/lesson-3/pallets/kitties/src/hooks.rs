@@ -36,6 +36,7 @@ mod hooks {
 
         fn offchain_worker(n: BlockNumberFor<T>) {
             log::info!("Kitties offchain_worker at block {:?}", n);
+            let _ = Self::offchain_worker(n);
         }
 
         #[cfg(feature = "try-runtime")]

@@ -66,6 +66,7 @@ mod benchmarks {
         assert_ok!(Pallet::<T>::create(
             RawOrigin::Signed(creator.clone()).into()
         ));
+
         assert_ok!(Pallet::<T>::create(
             RawOrigin::Signed(creator.clone()).into()
         ));
@@ -188,19 +189,108 @@ mod benchmarks {
             KittiesBid::<T>::get(kitty_id),
             Some((bidder.clone(), price))
         );
+
+        let stake_amount = <T as Config>::StakeAmount::get();
+
         assert_eq!(
             <T as Config>::Currency::reserved_balance(&bidder),
-            origin_reserved_balance + price + <T as Config>::StakeAmount::get()
+            origin_reserved_balance + price + stake_amount
         );
         assert_eq!(
             <T as Config>::Currency::free_balance(&bidder),
-            origin_free_balance - price - <T as Config>::StakeAmount::get()
+            origin_free_balance - price - stake_amount
         );
         assert_has_event::<T>(
             Event::<T>::KittyBid {
-                bidder,
+                bidder: bidder.clone(),
                 kitty_id,
                 price,
+            }
+            .into(),
+        );
+    }
+
+    #[benchmark]
+    fn bid_pass() {
+        let new_block: BlockNumberFor<T> = 10u32.into();
+        let balance_price: BalanceOf<T> = 500u32.into();
+        use frame_support::sp_runtime::{traits::One, Saturating};
+        let (owner, bidder, kitty_id, price, until_block) = (
+            whitelisted_caller::<T::AccountId>(),
+            create_funded_user::<T>("bidder", 0, 1000),
+            1,
+            balance_price,
+            frame_system::Pallet::<T>::block_number().saturating_add(new_block),
+        );
+        T::Currency::make_free_balance_be(&owner, 3000u32.into());
+
+        assert_ok!(Pallet::<T>::create(RawOrigin::Signed(owner.clone()).into()));
+        assert_ok!(Pallet::<T>::sale(
+            RawOrigin::Signed(owner.clone()).into(),
+            kitty_id,
+            until_block
+        ));
+        frame_system::Pallet::<T>::set_block_number(
+            frame_system::Pallet::<T>::block_number().saturating_add(One::one()),
+        );
+        let origin_reserved_balance = <T as Config>::Currency::reserved_balance(&bidder);
+        let origin_free_balance = <T as Config>::Currency::free_balance(&bidder);
+
+        #[extrinsic_call]
+        bid(RawOrigin::Signed(bidder.clone()), kitty_id, price);
+
+        assert_eq!(
+            KittiesBid::<T>::get(kitty_id),
+            Some((bidder.clone(), price))
+        );
+
+        let stake_amount = <T as Config>::StakeAmount::get();
+
+        assert_eq!(
+            <T as Config>::Currency::reserved_balance(&bidder),
+            origin_reserved_balance + price + stake_amount
+        );
+        assert_eq!(
+            <T as Config>::Currency::free_balance(&bidder),
+            origin_free_balance - price - stake_amount
+        );
+        assert_has_event::<T>(
+            Event::<T>::KittyBid {
+                bidder: bidder.clone(),
+                kitty_id,
+                price,
+            }
+            .into(),
+        );
+
+        let origin_reserved_balance_of_owner = <T as Config>::Currency::reserved_balance(&owner);
+        let origin_free_balance_of_owner = <T as Config>::Currency::free_balance(&owner);
+        let origin_reserved_balance = <T as Config>::Currency::reserved_balance(&bidder);
+        let origin_free_balance = <T as Config>::Currency::free_balance(&bidder);
+        frame_system::Pallet::<T>::set_block_number(until_block);
+        let _ = Pallet::<T>::on_initialize(frame_system::Pallet::<T>::block_number());
+        assert_eq!(KittyOwner::<T>::get(kitty_id), Some(bidder.clone()));
+        assert_eq!(
+            <T as Config>::Currency::reserved_balance(&bidder),
+            origin_reserved_balance - price
+        );
+        assert_eq!(
+            <T as Config>::Currency::free_balance(&bidder),
+            origin_free_balance
+        );
+        assert_eq!(
+            <T as Config>::Currency::reserved_balance(&owner),
+            origin_reserved_balance_of_owner - stake_amount
+        );
+        assert_eq!(
+            <T as Config>::Currency::free_balance(&owner),
+            origin_free_balance_of_owner + price + stake_amount
+        );
+        assert_has_event::<T>(
+            Event::<T>::KittyTransferred {
+                from: owner,
+                to: bidder.clone(),
+                kitty_id,
             }
             .into(),
         );
