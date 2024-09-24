@@ -6,7 +6,9 @@ mod hooks {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         fn on_runtime_upgrade() -> Weight {
-            Weight::default()
+            log::info!("Kitties storage migration");
+            migration::migrate_to_v1::<T>()
+            // Weight::default()
         }
 
         fn on_initialize(n: BlockNumberFor<T>) -> Weight {
@@ -41,17 +43,25 @@ mod hooks {
 
         #[cfg(feature = "try-runtime")]
         fn pre_upgrade() -> Result<Vec<u8>, TryRuntimeError> {
-            unimplemented!()
+            log::info!("kitties storage pre_upgrade");
+            let kitty_id = NextKittyId::<T>::get();
+            Ok(kitty_id.encode())
         }
 
         #[cfg(feature = "try-runtime")]
-        fn post_upgrade(_state: Vec<u8>) -> Result<(), TryRuntimeError> {
-            unimplemented!()
+        fn post_upgrade(state: Vec<u8>) -> Result<(), TryRuntimeError> {
+            log::info!("kitties storage post_upgrade");
+            let kitty_id_before = u32::decode(&mut &state[..]).map_err(|_| "invalid id state")?;
+            assert!(
+                kitty_id_before == 0 || Kitties::<T>::contains_key(&kitty_id_before),
+                "invalid not include state"
+            );
+            Ok(())
         }
 
         #[cfg(feature = "try-runtime")]
         fn try_state(_n: BlockNumberFor<T>) -> Result<(), TryRuntimeError> {
-            unimplemented!()
+            Ok(())
         }
     }
 }

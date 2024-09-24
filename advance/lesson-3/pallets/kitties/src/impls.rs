@@ -32,7 +32,14 @@ mod impls {
             T::Currency::reserve(&who, stake_amount)
                 .map_err(|_| Error::<T>::NotEnoughBalanceForStaking)?;
 
-            Kitties::<T>::insert(kitty_id, Kitty(data.clone()));
+            Kitties::<T>::insert(
+                kitty_id,
+                // Kitty( data.clone()),//Version 0
+                Kitty {
+                    dna: data.clone(),
+                    price: None,
+                },
+            );
             KittyOwner::<T>::insert(kitty_id, who.clone());
             NextKittyId::<T>::put(kitty_id);
 
@@ -138,12 +145,12 @@ mod impls {
                     );
                     T::Currency::unreserve(&owner, T::StakeAmount::get());
                     <KittyOwner<T>>::insert(kitty_id, bidder.clone());
-                    Self::deposit_event(Event::KittyTransferredAfterBidPass {
+                    Self::deposit_event(Event::KittyTransferredAfterBidKnockedDown {
                         from: owner,
                         to: bidder,
                         kitty_id,
                         price,
-                        usd_price: Self::average_price().map(|p| price * p.into()),
+                        usd_price: Self::average_price().map(|p| price * p.into()),//ignore Balance decimal 12    cents /dot 10^12
                     });
                 } else {
                     log::warn!(

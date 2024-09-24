@@ -18,7 +18,8 @@ mod dispatches {
         pub fn breed(origin: OriginFor<T>, kitty_id_1: u32, kitty_id_2: u32) -> DispatchResult {
             let who = ensure_signed(origin)?;
             ensure!(kitty_id_1 != kitty_id_2, Error::<T>::SameParentId);
-            let (Kitty(kitty_1), Kitty(kitty_2)) = (
+            // let (Kitty(kitty_1), Kitty(kitty_2)) = (//Version 0
+            let (Kitty { dna: kitty_1, .. }, Kitty { dna: kitty_2, .. }) = (
                 Self::kitties(kitty_id_1).ok_or(Error::<T>::KittyNotExist)?,
                 Self::kitties(kitty_id_2).ok_or(Error::<T>::KittyNotExist)?,
             );

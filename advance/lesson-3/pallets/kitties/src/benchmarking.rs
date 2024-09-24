@@ -51,7 +51,7 @@ mod benchmarks {
             Event::<T>::KittyCreated {
                 creator,
                 kitty_id,
-                data: Kitties::<T>::get(kitty_id).unwrap().0.clone(),
+                data: Kitties::<T>::get(kitty_id).unwrap().dna.clone(),
             }
             .into(),
         );
@@ -89,7 +89,7 @@ mod benchmarks {
             Event::<T>::KittyCreated {
                 creator,
                 kitty_id,
-                data: Kitties::<T>::get(kitty_id).unwrap().0.clone(),
+                data: Kitties::<T>::get(kitty_id).unwrap().dna.clone(),
             }
             .into(),
         );
@@ -211,7 +211,7 @@ mod benchmarks {
     }
 
     #[benchmark]
-    fn bid_pass() {
+    fn bid_knocked_down() {
         let new_block: BlockNumberFor<T> = 10u32.into();
         let balance_price: BalanceOf<T> = 500u32.into();
         use frame_support::sp_runtime::{traits::One, Saturating};
@@ -286,11 +286,19 @@ mod benchmarks {
             <T as Config>::Currency::free_balance(&owner),
             origin_free_balance_of_owner + price + stake_amount
         );
+        let prices = Prices::<T>::get();
+        let average_price = prices
+            .clone()
+            .into_iter()
+            .reduce(|a, b| a.saturating_add(b))
+            .map(|s| s / prices.len() as u32);
         assert_has_event::<T>(
-            Event::<T>::KittyTransferred {
+            Event::<T>::KittyTransferredAfterBidKnockedDown {
                 from: owner,
                 to: bidder.clone(),
                 kitty_id,
+                price,
+                usd_price: average_price.map(|p| price * p.into()),
             }
             .into(),
         );

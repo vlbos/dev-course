@@ -2,7 +2,7 @@
 
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
+use codec::Decode;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -100,7 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     //   `spec_version`, and `authoring_version` are the same between Wasm and native.
     // This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
     //   the compatible custom types.
-    spec_version: 100,
+    spec_version: 101,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -405,12 +405,36 @@ pub type SignedExtra = (
     frame_system::CheckWeight<Runtime>,
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+pub struct ExampleMigration<T: pallet_kitties::Config>(core::marker::PhantomData<T>);
+impl<T: pallet_kitties::Config> frame_support::traits::OnRuntimeUpgrade for ExampleMigration<T> {
+    fn on_runtime_upgrade() -> frame_support::weights::Weight {
+        log::info!("Kitties migration");
+        // pallet_kitties::NextKittyId::<T>::put(0);
+        pallet_kitties::NextKittyId::<T>::mutate(|kitty_id| *kitty_id = 0);
+        Weight::default()
+    }
+    #[cfg(feature = "try-runtime")]
+    fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::TryRuntimeError> {
+        log::info!("Kitties pre_upgrade");
+        let kitty_id = pallet_kitties::NextKittyId::<T>::get();
+        Ok(kitty_id.encode())
+    }
+
+    #[cfg(feature = "try-runtime")]
+    fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
+        log::info!("Kitties post_upgrade");
+        let kitty_id_before = u32::decode(&mut &state[..]).map_err(|_| "invalid state")?;
+        let kitty_id_after = pallet_kitties::NextKittyId::<T>::get();
+        assert!(kitty_id_before == kitty_id_after, "invalid state");
+        Ok(())
+    }
+}
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
 ///
 /// This can be a tuple of types, each implementing `OnRuntimeUpgrade`.
 #[allow(unused_parens)]
-type Migrations = ();
+type Migrations = (ExampleMigration<Runtime>); //
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =

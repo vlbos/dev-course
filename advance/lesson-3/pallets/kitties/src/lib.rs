@@ -24,6 +24,7 @@ mod extrinsics;
 mod genesis;
 mod hooks;
 mod impls;
+pub mod migration;
 mod validate;
 
 use alloc::vec::Vec;
@@ -106,15 +107,27 @@ pub mod pallet {
         traits::{Currency, Randomness, ReservableCurrency},
     };
     use frame_system::{self as system, pallet_prelude::*};
+    use sp_runtime::TryRuntimeError;
     use sp_std::prelude::*;
     use sp_weights::WeightMeter;
+    // Version 0
+    // #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+    // pub struct Kitty(pub [u8; 16]);
 
     #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-    pub struct Kitty(pub [u8; 16]);
+    #[scale_info(skip_type_params(T))]
+    #[codec(mel_bound())]
+    pub struct Kitty<T: Config> {
+        pub dna: [u8; 16],
+        pub price: Option<BalanceOf<T>>,
+    }
+
     pub type BalanceOf<T> =
         <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
+    /// The current storage version, we set to 1 our new version.
+    const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
     #[pallet::pallet]
+    #[pallet::storage_version(STORAGE_VERSION)]
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
@@ -123,7 +136,8 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn kitties)]
-    pub type Kitties<T> = StorageMap<_, Blake2_128Concat, u32, Kitty>;
+    // pub type Kitties<T> = StorageMap<_, Blake2_128Concat, u32, Kitty>;//Version 0
+    pub type Kitties<T> = StorageMap<_, Blake2_128Concat, u32, Kitty<T>>;
 
     #[pallet::storage]
     #[pallet::getter(fn kitty_owner)]

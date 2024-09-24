@@ -27,12 +27,12 @@ mod events {
             kitty_id: u32,
             price: BalanceOf<T>,
         },
-        KittyTransferredAfterBidPass {
+        KittyTransferredAfterBidKnockedDown {
             from: T::AccountId,
             to: T::AccountId,
             kitty_id: u32,
             price: BalanceOf<T>,
-            usd_price: Option<BalanceOf<T>>,
+            usd_price: Option<BalanceOf<T>>,/// Units 10^-10 usd cents duo to dot price ignore Balance decimal 12 
         },
         /// Event generated when new price is accepted to contribute to the average.
         NewPrice {

@@ -11,6 +11,11 @@ use sp_core::{
     H256,
 };
 use sp_keystore::{testing::MemoryKeystore, Keystore, KeystoreExt};
+use sp_runtime::{
+    testing::TestXt,
+    traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
+    RuntimeAppPublic,
+};
 #[test]
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {
@@ -69,7 +74,7 @@ fn it_works_for_sale() {
             origin_free_balance_of_owner + price + stake_amount
         );
         System::assert_has_event(
-            Event::<Test>::KittyTransferredAfterBidPass {
+            Event::<Test>::KittyTransferredAfterBidKnockedDown {
                 from: owner,
                 to: bidder,
                 kitty_id,
@@ -155,7 +160,7 @@ fn create_works() {
             Event::<Test>::KittyCreated {
                 creator,
                 kitty_id,
-                data: Kitties::<Test>::get(kitty_id).unwrap().0.clone(),
+                data: Kitties::<Test>::get(kitty_id).unwrap().dna.clone(),
             }
             .into(),
         );
@@ -212,7 +217,7 @@ fn breed_works() {
             Event::<Test>::KittyCreated {
                 creator,
                 kitty_id,
-                data: Kitties::<Test>::get(kitty_id).unwrap().0.clone(),
+                data: Kitties::<Test>::get(kitty_id).unwrap().dna.clone(),
             }
             .into(),
         );
