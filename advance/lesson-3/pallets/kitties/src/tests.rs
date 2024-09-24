@@ -5,17 +5,9 @@ use frame_support::{
     pallet_prelude::*,
     traits::{Currency, ExistenceRequirement, ReservableCurrency},
 };
-use sp_core::{
-    offchain::{testing, OffchainWorkerExt, TransactionPoolExt},
-    sr25519::Signature,
-    H256,
-};
+use sp_core::offchain::{testing, OffchainWorkerExt, TransactionPoolExt};
 use sp_keystore::{testing::MemoryKeystore, Keystore, KeystoreExt};
-use sp_runtime::{
-    testing::TestXt,
-    traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-    RuntimeAppPublic,
-};
+use sp_runtime::RuntimeAppPublic;
 #[test]
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {

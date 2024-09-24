@@ -150,7 +150,7 @@ mod impls {
                         to: bidder,
                         kitty_id,
                         price,
-                        usd_price: Self::average_price().map(|p| price * p.into()),//ignore Balance decimal 12    cents /dot 10^12
+                        usd_price: Self::average_price().map(|p| price * p.into()), //ignore Balance decimal 12    cents /dot 10^12
                     });
                 } else {
                     log::warn!(

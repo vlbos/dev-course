@@ -1,4 +1,3 @@
-
 use crate::{Config, Kitties, Kitty, Pallet};
 use frame_support::{pallet_prelude::*, storage_alias};
 use sp_std::prelude::*;

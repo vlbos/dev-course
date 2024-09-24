@@ -5,16 +5,11 @@ use frame_support::{
     traits::{ConstU128, ConstU16, ConstU32, ConstU64},
     weights::Weight,
 };
-use sp_core::{
-    offchain::{testing, OffchainWorkerExt, TransactionPoolExt},
-    sr25519::Signature,
-    H256,
-};
+use sp_core::{sr25519::Signature, H256};
 use sp_runtime::BuildStorage;
 use sp_runtime::{
     testing::TestXt,
     traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-    RuntimeAppPublic,
 };
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
