@@ -6936,6 +6936,8 @@ dependencies = [
 name = "pallet-parachain-template"
 version = "0.1.0"
 dependencies = [
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6944,6 +6946,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "staging-xcm",
 ]
 
 [[package]]

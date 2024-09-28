@@ -24,6 +24,11 @@ frame-support.workspace = true
 frame-system.workspace = true
 sp-runtime.workspace = true
 
+xcm = { workspace = true }
+
+cumulus-primitives-core = { workspace = true }
+cumulus-pallet-xcm = { workspace = true }
+
 [dev-dependencies]
 sp-core = { default-features = true, workspace = true }
 sp-io = { default-features = true, workspace = true }
@@ -45,9 +50,14 @@ std = [
 	"frame-system/std",
 
 	"sp-runtime/std",
+
+	"cumulus-pallet-xcm/std",
+	"cumulus-primitives-core/std",
+	"xcm/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"sp-runtime/try-runtime",
+    "cumulus-pallet-xcm/try-runtime",
 ]

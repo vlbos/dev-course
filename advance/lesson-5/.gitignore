@@ -5,7 +5,7 @@
 **/*.rs.bk
 
 **/.DS_Store
-
+**/.maintain
 # The cache for docker container dependency
 .cargo
 
@@ -14,3 +14,5 @@
 
 # direnv cache
 .direnv
+.keep
+zombienet

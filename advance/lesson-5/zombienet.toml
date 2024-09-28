@@ -1,5 +1,5 @@
 [relaychain]
-default_command = "polkadot"
+default_command = "/Users/lisheng/mygit/sub/polkadot-sdk/target/release/polkadot"
 chain = "rococo-local"
 
 [[relaychain.nodes]]
@@ -15,7 +15,15 @@ ws_port = 9955
 [[parachains]]
 id = 1000
 
-[parachains.collator]
-name = "charlie"
-ws_port = 9988
-command = "parachain-template-node"
+    [parachains.collator]
+    name = "charlie"
+    ws_port = 9988
+    command = "/Users/lisheng/mygit/sub/polkadot-sdk-course-code/advance/lesson-5/target/release/parachain-template-node"
+
+[[parachains]]
+id = 1001
+
+    [parachains.collator]
+    name = "eve"
+    ws_port = 9977
+    command = "/Users/lisheng/mygit/sub/polkadot-sdk-course-code/advance/lesson-5/target/release/parachain-template-node"
